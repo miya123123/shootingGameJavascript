@@ -6,14 +6,31 @@ let scorePenalty = 0;
 let wRect = 100;
 let hRect = 10;
 function setup(){
+    const t = new Date('July 20, 69 20:17:40 GMT+00:00');
+    console.log(t.getTime());
+    start = new Date();
+    for (var i = 0; i < 1000; i++) {
+        Math.sqrt(i);
+    }
+    end = new Date();
+    console.log('Operation took ' + (end.getTime() - start.getTime()) + 'msec');
+
     createCanvas(400, 400);
     rectMode(CENTER);
 }
 
 function draw(){
-    background(125);
+
+    current = new Date();
+    elapsed = current.getTime() - start.getTime()
+    console.log(elapsed);
+
+    // background(125);
+    background(0);
+    fill('White');
     text("RewardScore: " + scoreReward, width * 0.1, height * 0.1);
     text("PenaltyScore: " + scorePenalty, width * 0.4, height * 0.1);
+
     if(mouseX < d / 2){
         ellipse(d / 2, height * 0.8, d);
     }
@@ -24,7 +41,9 @@ function draw(){
     }
     for(let i = targets.length - 1; i >= 0; i--){
         ellipse(targets[i][0], targets[i][1], d);
-        targets[i][1] += 10;
+        // targets[i][1] += 10;
+        targets[i][1] += 3;
+        // targets[i][1] += 3 + elapsed / 10000
         if(isHitCircle(targets[i], [mouseX, height * 0.8], d / 2, d / 2)){
             targets.splice(i, 1);
             scoreReward++;
@@ -38,7 +57,8 @@ function draw(){
 
     for(let i = obstacles.length - 1; i >= 0; i--){
         rect(obstacles[i][0], obstacles[i][1], wRect, hRect)
-        obstacles[i][1] += 10;
+        // obstacles[i][1] += 8;
+        obstacles[i][1] += 3 + elapsed / 10000
         let a = [obstacles[i][0] - wRect / 2, obstacles[i][1] + hRect / 2];
         let b = [obstacles[i][0] + wRect / 2, obstacles[i][1] + hRect / 2];
         let c = [mouseX, height * 0.8];
