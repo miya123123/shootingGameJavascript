@@ -1,11 +1,22 @@
+// let d = 20;
 let d = 20;
 let targets = [];
 let obstacles = [];
+let bullets = [];
+let hasDrawnBullets = [];
 let scoreReward = 0;
 let scorePenalty = 0;
 let wRect = 100;
 let hRect = 10;
+let initialObstacles = 3;
+let maxObstacles = 10;
+let speedFactorObstacles = 10000;
+let wBullet = 10;
+let hBullet = 30;
 function setup(){
+    // textFont('Georgia');
+    // textFont('Helvetica');
+
     const t = new Date('July 20, 69 20:17:40 GMT+00:00');
     console.log(t.getTime());
     start = new Date();
@@ -20,10 +31,9 @@ function setup(){
 }
 
 function draw(){
-
     current = new Date();
     elapsed = current.getTime() - start.getTime()
-    console.log(elapsed);
+    // console.log(elapsed);
 
     // background(125);
     background(0);
@@ -39,6 +49,7 @@ function draw(){
     }else{
         ellipse(mouseX, height * 0.8, d);
     }
+    fill('blue');
     for(let i = targets.length - 1; i >= 0; i--){
         ellipse(targets[i][0], targets[i][1], d);
         // targets[i][1] += 10;
@@ -55,10 +66,15 @@ function draw(){
     }
 
 
+    fill('red');
     for(let i = obstacles.length - 1; i >= 0; i--){
         rect(obstacles[i][0], obstacles[i][1], wRect, hRect)
-        // obstacles[i][1] += 8;
-        obstacles[i][1] += 3 + elapsed / 10000
+        obstacle = initialObstacles + elapsed / speedFactorObstacles;
+        if(obstacle > maxObstacles){
+            obstacle = maxObstacles;
+        }
+        obstacles[i][1] += obstacle;
+
         let a = [obstacles[i][0] - wRect / 2, obstacles[i][1] + hRect / 2];
         let b = [obstacles[i][0] + wRect / 2, obstacles[i][1] + hRect / 2];
         let c = [mouseX, height * 0.8];
@@ -71,6 +87,35 @@ function draw(){
             obstacles.splice(i, 1);
         }
     }
+
+    fill('purple');
+    for(let i = bullets.length - 1; i >= 0; i--){
+        if(!hasDrawnBullets[i]){ //Needs correction.
+            // rect(mouseX, height * 0.8 - d / 2, wBullet, hBullet);
+            rect(mouseX, height * 0.8 - hBullet / 2 - d / 2, wBullet, hBullet);
+            bullets[i][0] = mouseX;
+            bullets[i][1] = height * 0.8 - hBullet / 2 - d / 2;
+            hasDrawnBullets[i] = true;
+        }
+        else{
+            rect(bullets[i][0], bullets[i][1], wBullet, hBullet)
+        }
+        bullets[i][1] -= 10;
+
+        let a = [bullets[i][0] - wBullet / 2, bullets[i][1] + hBullet / 2];
+        let b = [bullets[i][0] + wBullet / 2, bullets[i][1] + hBullet / 2];
+        let c = [mouseX, height * 0.8];
+        if(isHitLine2(a, b, c, d / 2)){
+            bullets.splice(i, 1);
+            scorePenalty++;
+            continue;
+        }
+        if(bullets[i][1] < 0){
+            bullets.splice(i, 1);
+            hasDrawnBullets.splice(i, 1);
+        }
+        }
+    fill('White');
 }
 
 function isHitCircle(obj1, obj2, r1, r2){
@@ -85,6 +130,36 @@ function calcDist(a, b){
 }
 
 function isHitLine(a, b, c, r){
+    let ab = [b[0] - a[0], b[1] - a[1]];
+    let ba = [a[0] - b[0], a[1] - b[1]];
+    let ac = [c[0] - a[0], c[1] - a[1]];
+    let bc = [c[0] - b[0], c[1] - b[1]];
+    let dist = calcVerticalLine(ab, ac);
+    if(dist > r){
+        return false;
+    }
+    let dot1 = dot(ab, ac);
+    let dot2 = dot(ba, bc);
+    if(dot1 >= 0 && dot2 >= 0){
+        return true;
+    }else if(dot1 < 0){
+        if(calcDist(a, c) < Math.pow(r, 2)){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }else if(dot2 < 0){
+        if(calcDist(b, c) < Math.pow(r, 2)){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+}
+
+function isHitLine2(a, b, c, r){
     let ab = [b[0] - a[0], b[1] - a[1]];
     let ba = [a[0] - b[0], a[1] - b[1]];
     let ac = [c[0] - a[0], c[1] - a[1]];
@@ -137,11 +212,17 @@ setInterval(() => {
         obstacles.push([width * Math.random(), 0]);
     }
 }, 200);
+// }, 5000);
+
+// console.log('bbbbbbbbbb');
 
 
+function mouseClicked(){
+    bullets.push([width * Math.random(), 0]);
+    // bullets.push([100, 0]);
+    console.log(bullets);
+    hasDrawnBullets.push(false);
+    console.log(hasDrawnBullets);
 
-
-
-
-
+}
 
