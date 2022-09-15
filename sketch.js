@@ -1,4 +1,6 @@
-// let d = 20;
+// -> +
+// ↓
+// +
 let d = 20;
 let targets = [];
 let obstacles = [];
@@ -8,11 +10,13 @@ let scoreReward = 0;
 let scorePenalty = 0;
 let wRect = 100;
 let hRect = 10;
+let wBullet = 10;
+let hBullet = 30;
 let initialObstacles = 3;
 let maxObstacles = 10;
 let speedFactorObstacles = 10000;
-let wBullet = 10;
-let hBullet = 30;
+let speedBullet = 10;
+let isStop = false;
 function setup(){
     // textFont('Georgia');
     // textFont('Helvetica');
@@ -31,6 +35,10 @@ function setup(){
 }
 
 function draw(){
+    if(isStop){
+        return;
+    }
+
     current = new Date();
     elapsed = current.getTime() - start.getTime()
     // console.log(elapsed);
@@ -75,10 +83,10 @@ function draw(){
         }
         obstacles[i][1] += obstacle;
 
-        let a = [obstacles[i][0] - wRect / 2, obstacles[i][1] + hRect / 2];
-        let b = [obstacles[i][0] + wRect / 2, obstacles[i][1] + hRect / 2];
-        let c = [mouseX, height * 0.8];
-        if(isHitLine(a, b, c, d / 2)){
+        let a = [obstacles[i][0] - wRect / 2, obstacles[i][1] + hRect / 2]; //Left bottom of obstacles
+        let b = [obstacles[i][0] + wRect / 2, obstacles[i][1] + hRect / 2]; //Right bottom of obstacles
+        let c = [mouseX, height * 0.8]; //Position of player.
+        if(isHitObstacle(a, b, c, d / 2)){
             obstacles.splice(i, 1);
             scorePenalty++;
             continue;
@@ -89,7 +97,7 @@ function draw(){
     }
 
     fill('purple');
-    for(let i = bullets.length - 1; i >= 0; i--){
+    bullet : for(let i = bullets.length - 1; i >= 0; i--){
         if(!hasDrawnBullets[i]){ //Needs correction.
             // rect(mouseX, height * 0.8 - d / 2, wBullet, hBullet);
             rect(mouseX, height * 0.8 - hBullet / 2 - d / 2, wBullet, hBullet);
@@ -100,21 +108,22 @@ function draw(){
         else{
             rect(bullets[i][0], bullets[i][1], wBullet, hBullet)
         }
-        bullets[i][1] -= 10;
+        // bullets[i][1] -= 10;
+        bullets[i][1] -= speedBullet;
 
-        let a = [bullets[i][0] - wBullet / 2, bullets[i][1] + hBullet / 2];
-        let b = [bullets[i][0] + wBullet / 2, bullets[i][1] + hBullet / 2];
-        let c = [mouseX, height * 0.8];
-        if(isHitLine2(a, b, c, d / 2)){
-            bullets.splice(i, 1);
-            scorePenalty++;
-            continue;
+        for(let j = obstacles.length - 1; j >= 0; j--){
+            if(haveHitBulletAndObstacle(bullets[i], obstacles[j])){
+                bullets.splice(i, 1);
+                obstacles.splice(j, 1);
+                scoreReward++;
+                continue bullet;
+            }
         }
         if(bullets[i][1] < 0){
             bullets.splice(i, 1);
             hasDrawnBullets.splice(i, 1);
         }
-        }
+    }
     fill('White');
 }
 
@@ -129,7 +138,7 @@ function calcDist(a, b){
     return Math.pow((a[0] - b[0]), 2) + Math.pow((a[1] - b[1]), 2);
 }
 
-function isHitLine(a, b, c, r){
+function isHitObstacle(a, b, c, r){
     let ab = [b[0] - a[0], b[1] - a[1]];
     let ba = [a[0] - b[0], a[1] - b[1]];
     let ac = [c[0] - a[0], c[1] - a[1]];
@@ -159,35 +168,17 @@ function isHitLine(a, b, c, r){
     }
 }
 
-function isHitLine2(a, b, c, r){
-    let ab = [b[0] - a[0], b[1] - a[1]];
-    let ba = [a[0] - b[0], a[1] - b[1]];
-    let ac = [c[0] - a[0], c[1] - a[1]];
-    let bc = [c[0] - b[0], c[1] - b[1]];
-    let dist = calcVerticalLine(ab, ac);
-    if(dist > r){
-        return false;
-    }
-    let dot1 = dot(ab, ac);
-    let dot2 = dot(ba, bc);
-    if(dot1 >= 0 && dot2 >= 0){
+function haveHitBulletAndObstacle(bullet, obstacle){
+    let dist = [Math.abs(bullet[0] - obstacle[0]), Math.abs(bullet[1] - obstacle[1])];   
+    console.log(dist[0], dist[1]);
+    console.log(wRect / 2 + wBullet / 2, hRect / 2 + hBullet / 2);
+    if(parseFloat(dist[0]) < parseFloat(wRect / 2 + wBullet / 2) && parseFloat(dist[1]) < parseFloat(hRect / 2 + hBullet / 2)){
+        console.log("Hit");
         return true;
-    }else if(dot1 < 0){
-        if(calcDist(a, c) < Math.pow(r, 2)){
-            return true;
-        }
-        else{
-            return false;
-        }
-    }else if(dot2 < 0){
-        if(calcDist(b, c) < Math.pow(r, 2)){
-            return true;
-        }
-        else{
-            return false;
-        }
     }
+    return false;
 }
+
 
 function dot(a, b){
     return a[0] * b[0] + a[1] * b[1];
@@ -212,6 +203,7 @@ setInterval(() => {
         obstacles.push([width * Math.random(), 0]);
     }
 }, 200);
+// }, 2000);
 // }, 5000);
 
 // console.log('bbbbbbbbbb');
@@ -219,10 +211,28 @@ setInterval(() => {
 
 function mouseClicked(){
     bullets.push([width * Math.random(), 0]);
-    // bullets.push([100, 0]);
-    console.log(bullets);
     hasDrawnBullets.push(false);
-    console.log(hasDrawnBullets);
-
 }
+
+function keyTyped(){
+    if(key === 'z'){
+        bullets.push([width * Math.random(), 0]);
+        hasDrawnBullets.push(false);
+    }
+    if(key == 'x'){
+        isStop = !isStop;
+    }
+}
+
+function gameOver(){
+    fill('white');
+    textAlign(CENTER, CENTER);
+    textSize(50);
+    text("Game Over", width / 2, height / 2);
+    noLoop();
+}
+
+
+
+
 
